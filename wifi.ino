@@ -83,11 +83,15 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
   update(buf);
 }
 
+int tries = 10;
 void reconnect()
 {
   // Loop until we're reconnected
   while (!client.connected())
   {
+
+
+
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect(ssid))
@@ -104,7 +108,12 @@ void reconnect()
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
-      delay(5000);
+      delay(1000);
+      tries--;
+      if(tries == 0){
+        deepSleep();
+      }
+
     }
   }
 }

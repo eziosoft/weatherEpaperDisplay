@@ -12,6 +12,9 @@
 
 ADC_MODE(ADC_VCC);
 
+//milliseconds to sleep
+const int intervall = 60000;
+
 struct bitmap_pair
 {
   const unsigned char *black;
@@ -32,9 +35,10 @@ void setup()
   delay(100);
   display.init(115200);
   display.setFullWindow();
-  // drawBitmap();
-  // display.powerOff();
+ 
 
+  WiFi.forceSleepWake();
+  delay(1);
   setupWifi();
 
   vdd = ESP.getVcc() / 1000.0;
@@ -58,7 +62,17 @@ void update(char *text)
   sendTelemetry();
 
   delay(100);
-  ESP.deepSleep(60e6);
+  deepSleep();
+}
+
+
+void deepSleep()
+{
+  //https://github.com/esp8266/Arduino/issues/644
+  WiFi.mode(WIFI_OFF);
+  WiFi.forceSleepBegin();
+  delay(1);
+  ESP.deepSleep(intervall * 1000/*, WAKE_RF_DISABLED*/);
 }
 
 void printText1(char *text)
