@@ -2,10 +2,12 @@
 #include <WiFiClient.h>
 #include <WiFiManager.h>
 #include <PubSubClient.h>
+#define MQTT_MAX_PACKET_SIZE 2048
 
-const char *ssid = "Epaper";              //robot creates wifi hotspot when wifi connection is not configured
-const char *outTopic = "epaper/out";      //MQTT topic for robot telemetry messages
-const char *inTopic = "epaper/in";        //MQTT topic for control messages
+const char *ssid = "Epaper";         //robot creates wifi hotspot when wifi connection is not configured
+const char *outTopic = "epaper/out"; //MQTT topic for robot telemetry messages
+const char *inTopic = "epaper/in";   //MQTT topic for control messages
+const char *jsonTopic = "epaper/json";
 const char *mqtt_server = "192.168.0.19"; //my  MQTT server
 const char *mqtt_server1 = "test.mosquitto.org";
 
@@ -17,6 +19,8 @@ void configModeCallback(WiFiManager *myWiFiManager);
 
 void setupWifi()
 {
+  client.setBufferSize(MQTT_MAX_PACKET_SIZE);
+  
   WiFiManager wifiManager;
   wifiManager.setAPCallback(configModeCallback);
 
@@ -53,7 +57,7 @@ void loopWifi()
 void sendTelemetry()
 {
   char buf[50];
-  sprintf(buf, "T;%s;%d;RSSI=%d;Bat=%d", ssid, millis() ,(int)rssi, (int)(vdd*100));
+  sprintf(buf, "T;%s;%d;RSSI=%d;Bat=%d", ssid, millis(), (int)rssi, (int)(vdd * 100));
   client.publish(outTopic, buf);
 }
 
@@ -78,9 +82,16 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
     Serial.print((char)payload[i]);
     buf[i] = (char)payload[i];
   }
-  Serial.println();
 
-  update(buf);
+  String strTopic = String((char *)topic);
+  if (strTopic == inTopic)
+  {
+    update(buf);
+  }
+  else
+  {
+    json(buf);
+  }
 }
 
 int tries = 10;
@@ -90,8 +101,6 @@ void reconnect()
   while (!client.connected())
   {
 
-
-
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (client.connect(ssid))
@@ -100,7 +109,8 @@ void reconnect()
       // Once connected, publish an announcement...
       // client.publish(outTopic, "Tank READY");
       // ... and resubscribe
-      client.subscribe(inTopic);
+      // client.subscribe(inTopic);
+      client.subscribe(jsonTopic);
     }
     else
     {
@@ -110,10 +120,10 @@ void reconnect()
       // Wait 5 seconds before retrying
       delay(1000);
       tries--;
-      if(tries == 0){
+      if (tries == 0)
+      {
         deepSleep();
       }
-
     }
   }
 }
