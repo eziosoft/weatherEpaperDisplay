@@ -20,7 +20,7 @@ void configModeCallback(WiFiManager *myWiFiManager);
 void setupWifi()
 {
   client.setBufferSize(MQTT_MAX_PACKET_SIZE);
-  
+
   WiFiManager wifiManager;
   wifiManager.setAPCallback(configModeCallback);
 
@@ -58,7 +58,7 @@ void sendTelemetry()
 {
   char buf[50];
   sprintf(buf, "T;%s;%d;RSSI=%d;Bat=%d", ssid, millis(), (int)rssi, (int)(vdd * 100));
-  client.publish(outTopic, buf);
+  client.publish(outTopic, buf, true);
 }
 
 void configModeCallback(WiFiManager *myWiFiManager)
