@@ -9,23 +9,17 @@
 #include "ESP8266WiFi.h"
 #include "icons.h"
 
-#define PrintString StreamString
+ADC_MODE(ADC_VCC);
 #define ENABLE_GxEPD2_GFX 0
 
+#define PrintString StreamString
 
 static const uint16_t WIDTH = 152;
 static const uint16_t HEIGHT = 296;
 
-ADC_MODE(ADC_VCC);
-
 //milliseconds to sleep
-int intervall = 60000;
-
-struct bitmap_pair
-{
-  const unsigned char *black;
-  const unsigned char *red;
-};
+static const uint16_t minute = 60;
+long interval = minute;
 
 GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4));
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4));
@@ -36,9 +30,6 @@ float vdd, rssi;
 void setup()
 {
   Serial.begin(115200);
-  Serial.println();
-  Serial.println("setup");
-  delay(100);
   display.init(115200);
   display.setFullWindow();
 
@@ -48,11 +39,9 @@ void setup()
 
   vdd = ESP.getVcc() / 1000.0;
   vddString.print(vdd, 2);
-  Serial.println(vddString);
 
   rssi = dBmtoPercentage(WiFi.RSSI());
   rssiString.print(rssi, 0);
-  Serial.println(rssi);
 }
 
 void loop()
@@ -60,20 +49,12 @@ void loop()
   loopWifi();
   if (millis() > 20000)
   {
-    printText("timeout");
+    printTextCenter("timeout");
     delay(100);
+
+    interval = minute;
     deepSleep();
   }
-}
-
-void update(char *text)
-{
-  printText1(text);
-  display.hibernate();
-  sendTelemetry();
-
-  delay(100);
-  deepSleep();
 }
 
 void json(char *json)
@@ -86,21 +67,18 @@ void json(char *json)
 
   const size_t capacity = JSON_ARRAY_SIZE(10) + JSON_OBJECT_SIZE(2) + 10 * JSON_OBJECT_SIZE(3) + 230;
   DynamicJsonDocument doc(capacity);
-
-  // const char *json = "{\"nextRefresh\":60000,\"data\":[{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"},{\"x\":10,\"y\":10,\"text\":\"demo text\"}]}";
-
   DeserializationError error = deserializeJson(doc, json);
   if (error)
   {
     Serial.print(F("deserializeJson() failed: "));
     Serial.println(error.c_str());
-    printText("json error");
+    printTextCenter("json error");
+    interval = minute;
     deepSleep();
     return;
   }
 
-  long nextRefresh = doc["NR"]; // 60000
-  intervall = nextRefresh;
+  interval = doc["NR"]; // in seconds
 
   int icon = doc["i"];
   JsonArray data = doc["d"];
@@ -145,7 +123,7 @@ void json(char *json)
       display.drawInvertedBitmap(HEIGHT - 100, 20, i50n, 100, 100, GxEPD_BLACK);
       break;
     default:
-    break;
+      break;
     }
 
     for (int i = 0; i < 10; i++)
@@ -158,22 +136,14 @@ void json(char *json)
       const char *data_text = datai["t"]; // "demo text"
 
       if (font == 1)
-      {
         display.setFont(&FreeMonoBold24pt7b);
-      }
       else
-      {
         display.setFont(&FreeMonoBold9pt7b);
-      }
 
       if (color == 1)
-      {
         display.setTextColor(GxEPD_RED);
-      }
       else
-      {
         display.setTextColor(GxEPD_BLACK);
-      }
 
       display.setCursor(data_x, data_y);
       display.print(data_text);
@@ -186,43 +156,17 @@ void json(char *json)
 
 void deepSleep()
 {
-  Serial.println("deep sleep");
   display.hibernate();
   delay(10);
 
-https: //github.com/esp8266/Arduino/issues/644
+  // https: //github.com/esp8266/Arduino/issues/644
   WiFi.mode(WIFI_OFF);
   WiFi.forceSleepBegin();
   delay(1);
-  ESP.deepSleep(intervall * 1000 /*, WAKE_RF_DISABLED*/);
+  ESP.deepSleep(interval * 1e6 /*, WAKE_RF_DISABLED*/); //in seconds
 }
 
-void printText1(char *text)
-{
-  //Serial.println("helloWorld");
-  display.setRotation(1);
-  display.setFont(&FreeMonoBold9pt7b);
-  display.setTextColor(GxEPD_BLACK);
-  int16_t tbx, tby;
-  uint16_t tbw, tbh;
-  display.getTextBounds(text, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // center bounding box by transposition of origin:
-  uint16_t x = ((display.width() - tbw) / 2) - tbx;
-  uint16_t y = ((display.height() - tbh) / 2) - tby;
 
-  display.setFullWindow();
-  display.firstPage();
-  do
-  {
-    display.fillScreen(GxEPD_WHITE);
-
-    printStatic();
-
-    display.setCursor(0, y);
-    display.print(text);
-  } while (display.nextPage());
-  //Serial.println("helloWorld done");
-}
 
 void printStatic()
 {
@@ -237,16 +181,14 @@ void printStatic()
   display.setTextColor(GxEPD_BLACK);
 }
 
-void printText(char *text)
+void printTextCenter(char *text)
 {
-  //Serial.println("helloWorld");
   display.setRotation(1);
   display.setFont(&FreeMonoBold9pt7b);
   display.setTextColor(GxEPD_BLACK);
   int16_t tbx, tby;
   uint16_t tbw, tbh;
   display.getTextBounds(text, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // center bounding box by transposition of origin:
   uint16_t x = ((display.width() - tbw) / 2) - tbx;
   uint16_t y = ((display.height() - tbh) / 2) - tby;
   display.setFullWindow();
@@ -254,39 +196,16 @@ void printText(char *text)
   do
   {
     display.fillScreen(GxEPD_WHITE);
-
     printStatic();
-
     display.setCursor(x, y);
     display.print(text);
   } while (display.nextPage());
-  //Serial.println("helloWorld done");
 }
 
-// void drawBitmap()
-// {
-
-//   bitmap_pair bitmap_pairs[] =
-//       {
-//           {gImage_e, gImage_r}};
-
-//   for (uint16_t i = 0; i < sizeof(bitmap_pairs) / sizeof(bitmap_pair); i++)
-//   {
-//     display.firstPage();
-//     do
-//     {
-//       display.fillScreen(GxEPD_WHITE);
-//       display.drawInvertedBitmap(0, 0, bitmap_pairs[i].black, display.epd2.WIDTH, display.epd2.HEIGHT, GxEPD_BLACK);
-//       //      display.drawBitmap(0, 0, bitmap_pairs[i].red, display.epd2.WIDTH, display.epd2.HEIGHT, GxEPD_RED);
-//     } while (display.nextPage());
-//     delay(2000);
-//   }
-// }
-
-const int RSSI_MAX = -50;  // define maximum strength of signal in dBm
-const int RSSI_MIN = -100; // define minimum strength of signal in dBm
 int dBmtoPercentage(int dBm)
 {
+  const int RSSI_MAX = -50;  // define maximum strength of signal in dBm
+  const int RSSI_MIN = -100; // define minimum strength of signal in dBm
   int quality;
   if (dBm <= RSSI_MIN)
   {
@@ -302,4 +221,4 @@ int dBmtoPercentage(int dBm)
   }
 
   return quality;
-} //dBmtoPercentage
+} 

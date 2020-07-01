@@ -24,7 +24,7 @@ void setupWifi()
   if (!wifiManager.autoConnect(ssid))
   {
     Serial.println("failed to connect and hit timeout");
-    printText("failed to connect and hit timeout");
+    printTextCenter("failed to connect and hit timeout");
     delay(100);
     ESP.deepSleep(10e6);
   }
@@ -55,7 +55,7 @@ void configModeCallback(WiFiManager *myWiFiManager)
   Serial.println(WiFi.softAPIP());
   //if you used auto generated SSID, print it
   Serial.println(myWiFiManager->getConfigPortalSSID());
-  printText("Configuration");
+  printTextCenter("Configuration");
 }
 
 void mqttCallback(char *topic, byte *payload, unsigned int length)
