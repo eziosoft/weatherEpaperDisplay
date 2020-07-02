@@ -24,8 +24,8 @@ t - text
 
 
 example script NodeRed:
-    const minute= 60;
 
+    const minute= 60;
     var NR = 30*minute;
     var long = 60*minute;
 
