@@ -2,6 +2,12 @@
 #include <GxEPD2_3C.h>
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeMonoBold24pt7b.h>
+
+#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeSans18pt7b.h>
+#include <Fonts/FreeSans24pt7b.h>
+#include <Fonts/FreeSans9pt7b.h>
+
 #include <StreamString.h>
 #include <GxEPD2_3C.h>
 #include <ArduinoJson.h>
@@ -65,7 +71,7 @@ void json(char *json)
   WiFi.forceSleepBegin();
   Serial.println("\n\nWIFI OFF");
 
-  const size_t capacity = JSON_ARRAY_SIZE(10) + JSON_OBJECT_SIZE(2) + 10 * JSON_OBJECT_SIZE(3) + 230;
+  const size_t capacity = JSON_ARRAY_SIZE(10) + JSON_OBJECT_SIZE(4) + 10 * JSON_OBJECT_SIZE(5) + 300;
   DynamicJsonDocument doc(capacity);
   DeserializationError error = deserializeJson(doc, json);
   if (error)
@@ -81,6 +87,13 @@ void json(char *json)
   interval = doc["NR"]; // in seconds
 
   int icon = doc["i"];
+  int iconColor = GxEPD_BLACK;
+
+  if (doc["ic"] == 1)
+  {
+    iconColor = GxEPD_RED;
+  }
+
   JsonArray data = doc["d"];
 
   display.setRotation(1);
@@ -96,31 +109,31 @@ void json(char *json)
     switch (icon)
     {
     case 1:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i01n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i01n, 100, 100, iconColor);
       break;
     case 2:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i02n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i02n, 100, 100, iconColor);
       break;
     case 3:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i03n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i03n, 100, 100, iconColor);
       break;
     case 4:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i04n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i04n, 100, 100, iconColor);
       break;
     case 9:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i09n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i09n, 100, 100, iconColor);
       break;
     case 10:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i10n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i10n, 100, 100, iconColor);
       break;
     case 11:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i11n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i11n, 100, 100, iconColor);
       break;
     case 13:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i13n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i13n, 100, 100, iconColor);
       break;
     case 50:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i50n, 100, 100, GxEPD_BLACK);
+      display.drawInvertedBitmap(HEIGHT - 100, 20, i50n, 100, 100, iconColor);
       break;
     default:
       break;
@@ -133,12 +146,39 @@ void json(char *json)
       int data_y = datai["y"]; // 10
       int font = datai["f"];
       int color = datai["c"];
-      const char *data_text = datai["t"]; // "demo text"
+      const char *data_text = datai["t"]; // "text"
 
-      if (font == 1)
-        display.setFont(&FreeMonoBold24pt7b);
-      else
+      // #include <Fonts/FreeSans12pt7b.h>
+      // #include <Fonts/FreeSans18pt7b.h>
+      // #include <Fonts/FreeSans24pt7b.h>
+      // #include <Fonts/FreeSans9pt7b.h>
+      switch (font)
+      {
+      case 0:
         display.setFont(&FreeMonoBold9pt7b);
+        break;
+
+      case 1:
+        display.setFont(&FreeMonoBold24pt7b);
+        break;
+
+      case 2:
+        display.setFont(&FreeSans9pt7b);
+        break;
+      case 3:
+        display.setFont(&FreeSans12pt7b);
+        break;
+      case 4:
+        display.setFont(&FreeSans18pt7b);
+        break;
+      case 5:
+        display.setFont(&FreeSans24pt7b);
+        break;
+
+      default:
+        display.setFont(&FreeMonoBold9pt7b);
+        break;
+      }
 
       if (color == 1)
         display.setTextColor(GxEPD_RED);
@@ -165,8 +205,6 @@ void deepSleep()
   delay(1);
   ESP.deepSleep(interval * 1e6 /*, WAKE_RF_DISABLED*/); //in seconds
 }
-
-
 
 void printStatic()
 {
@@ -221,4 +259,4 @@ int dBmtoPercentage(int dBm)
   }
 
   return quality;
-} 
+}
