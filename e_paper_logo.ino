@@ -1,34 +1,34 @@
-#include <GxEPD2_BW.h>
+#include <GxEPD2_BW.h> //https://github.com/eziosoft/GxEPD2
 #include <GxEPD2_3C.h>
+
 #include <Fonts/FreeMonoBold9pt7b.h>
 #include <Fonts/FreeMonoBold24pt7b.h>
-
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans18pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 
 #include <StreamString.h>
+#define PrintString StreamString
+
 #include <GxEPD2_3C.h>
 #include <ArduinoJson.h>
 
 #include "ESP8266WiFi.h"
-#include "icons.h"
+#include "icons.h" //weather icons from OpenWeather
 
-ADC_MODE(ADC_VCC);
-#define ENABLE_GxEPD2_GFX 0
-
-#define PrintString StreamString
-
+// GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
+GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BRW - slow refresh
 static const uint16_t WIDTH = 152;
 static const uint16_t HEIGHT = 296;
 
+ADC_MODE(ADC_VCC);          //enable VCC measurement
+#define ENABLE_GxEPD2_GFX 1 //enable Adafruit GFX library
+
 //milliseconds to sleep
 static const uint16_t minute = 60;
-long interval = minute;
+long interval = minute; //deep sleep duration
 
-GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4));
-// GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4));
 PrintString vddString;
 PrintString rssiString;
 float vdd, rssi;
@@ -53,7 +53,7 @@ void setup()
 void loop()
 {
   loopWifi();
-  if (millis() > 20000)
+  if (millis() > 20000) //if this runs more than 20sek something was wrong. usually takes 8sek
   {
     printTextCenter("timeout");
     delay(100);
@@ -71,7 +71,7 @@ void json(char *json)
   WiFi.forceSleepBegin();
   Serial.println("\n\nWIFI OFF");
 
-  const size_t capacity = JSON_ARRAY_SIZE(10) + JSON_OBJECT_SIZE(4) + 10 * JSON_OBJECT_SIZE(5) + 300;
+  const size_t capacity = 2 * JSON_ARRAY_SIZE(10) + 21 * JSON_OBJECT_SIZE(5) + 460;
   DynamicJsonDocument doc(capacity);
   DeserializationError error = deserializeJson(doc, json);
   if (error)
@@ -95,6 +95,7 @@ void json(char *json)
   }
 
   JsonArray data = doc["d"];
+  JsonArray lines = doc["l"];
 
   display.setRotation(1);
   display.setFont(&FreeMonoBold9pt7b);
@@ -142,16 +143,12 @@ void json(char *json)
     for (int i = 0; i < 10; i++)
     {
       JsonObject datai = data[i];
-      int data_x = datai["x"]; // 10
-      int data_y = datai["y"]; // 10
-      int font = datai["f"];
-      int color = datai["c"];
+      int data_x = datai["x"];            // 10
+      int data_y = datai["y"];            // 10
+      int font = datai["f"];              //font number
+      int color = datai["c"];             // 0 or 1 - black or red
       const char *data_text = datai["t"]; // "text"
 
-      // #include <Fonts/FreeSans12pt7b.h>
-      // #include <Fonts/FreeSans18pt7b.h>
-      // #include <Fonts/FreeSans24pt7b.h>
-      // #include <Fonts/FreeSans9pt7b.h>
       switch (font)
       {
       case 0:
@@ -189,6 +186,22 @@ void json(char *json)
       display.print(data_text);
     }
 
+    for (int i = 0; i < 10; i++)
+    {
+      JsonObject line = lines[i];
+      int x1 = line["x1"];   // 10
+      int x2 = line["x2"];   // 10
+      int y1 = line["y1"];   // 10
+      int y2 = line["y2"];   // 10
+      int color = line["c"]; // 0 or 1 - black or red
+
+      if (color == 1)
+        display.drawLine(x1, y1, x2, y2, GxEPD_RED);
+
+      else
+        display.drawLine(x1, y1, x2, y2, GxEPD_BLACK);
+    }
+
   } while (display.nextPage());
 
   deepSleep();
@@ -206,7 +219,7 @@ void deepSleep()
   ESP.deepSleep(interval * 1e6 /*, WAKE_RF_DISABLED*/); //in seconds
 }
 
-void printStatic()
+void printStatic() //prints wifi signal strength and VCC in top right corner
 {
   display.fillRect(208, 0, 88, 13, GxEPD_BLACK);
   display.setTextColor(GxEPD_WHITE);
@@ -217,9 +230,10 @@ void printStatic()
   display.setCursor(210, 11);
   display.print(rssiString);
   display.setTextColor(GxEPD_BLACK);
+  // display.drawLine(0, 13, HEIGHT, 13, GxEPD_RED);
 }
 
-void printTextCenter(char *text)
+void printTextCenter(char *text) // prints text in center of the screen. Used to display errors
 {
   display.setRotation(1);
   display.setFont(&FreeMonoBold9pt7b);
