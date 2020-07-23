@@ -63,11 +63,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
   Serial.print("MQTT:");
 
   char buf[length];
-  for (int i = 0; i < length; i++)
-  {
-    Serial.print((char)payload[i]);
-    buf[i] = (char)payload[i];
-  }
+  // for (int i = 0; i < length; i++)
+  // {
+  //   Serial.print((char)payload[i]);
+  //   buf[i] = (char)payload[i];
+  // }
 
   String strTopic = String((char *)topic);
   if (strTopic == jsonTopic)
