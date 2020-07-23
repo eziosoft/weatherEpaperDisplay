@@ -17,12 +17,15 @@
 #include "ESP8266WiFi.h"
 #include "icons.h" //weather icons from OpenWeather
 
+#define FW_VERSION 1
+
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
 GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BRW - slow refresh
 static const uint16_t WIDTH = 152;
 static const uint16_t HEIGHT = 296;
 
-ADC_MODE(ADC_VCC);          //enable VCC measurement
+ADC_MODE(ADC_VCC); //enable VCC measurement
+#define VDD_offset -0.17
 #define ENABLE_GxEPD2_GFX 1 //enable Adafruit GFX library
 
 //milliseconds to sleep
@@ -43,7 +46,7 @@ void setup()
   delay(1);
   setupWifi();
 
-  vdd = ESP.getVcc() / 1000.0;
+  vdd = (ESP.getVcc() / 1000.0) + VDD_offset;
   vddString.print(vdd, 2);
 
   rssi = dBmtoPercentage(WiFi.RSSI());
@@ -66,12 +69,8 @@ void loop()
 void json(char *json)
 {
   sendTelemetry();
-  delay(100);
-  WiFi.mode(WIFI_OFF);
-  WiFi.forceSleepBegin();
-  Serial.println("\n\nWIFI OFF");
 
-  const size_t capacity = 2 * JSON_ARRAY_SIZE(10) + 21 * JSON_OBJECT_SIZE(5) + 460;
+  const size_t capacity = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(20) + 24 * JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + 550;
   DynamicJsonDocument doc(capacity);
   DeserializationError error = deserializeJson(doc, json);
   if (error)
@@ -83,6 +82,17 @@ void json(char *json)
     deepSleep();
     return;
   }
+
+  int version = doc["v"];
+  if (version > FW_VERSION)
+  {
+    updateFirmware();
+  }
+
+  delay(100);
+  WiFi.mode(WIFI_OFF);
+  WiFi.forceSleepBegin();
+  Serial.println("\n\nWIFI OFF");
 
   interval = doc["NR"]; // in seconds
 
@@ -273,4 +283,50 @@ int dBmtoPercentage(int dBm)
   }
 
   return quality;
+}
+
+/////////////////////////////////////////
+void update_started()
+{
+  Serial.println("CALLBACK:  HTTP update process started");
+  printTextCenter("Firmware update...");
+}
+
+void update_finished()
+{
+  Serial.println("CALLBACK:  HTTP update process finished");
+  printTextCenter("Firmware update DONE!");
+}
+
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
+
+void updateFirmware()
+{
+
+  ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
+  ESPhttpUpdate.onStart(update_started);
+  ESPhttpUpdate.onEnd(update_finished);
+  // ESPhttpUpdate.onProgress(update_progress);
+  // ESPhttpUpdate.onError(update_error);
+
+  WiFiClient client;
+  t_httpUpdate_return ret = ESPhttpUpdate.update(client, "http://server/file.bin");
+
+  switch (ret)
+  {
+  case HTTP_UPDATE_FAILED:
+    Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+    printTextCenter("FW update failed");
+    break;
+
+  case HTTP_UPDATE_NO_UPDATES:
+    Serial.println("HTTP_UPDATE_NO_UPDATES");
+    break;
+
+  case HTTP_UPDATE_OK:
+    Serial.println("HTTP_UPDATE_OK");
+    
+    break;
+  }
 }
