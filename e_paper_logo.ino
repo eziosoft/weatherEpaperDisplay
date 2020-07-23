@@ -304,14 +304,19 @@ void update_finished()
 void updateFirmware()
 {
 
+  // https://raw.githubusercontent.com/eziosoft/weatherEpaperDisplay/e_paper_logo.ino.d1.bin
+  const char *host = "raw.githubusercontent.com";
+  const int httpsPort = 443;
+  const char *url = "eziosoft/weatherEpaperDisplay/e_paper_logo.ino.d1.bin";
+
   ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
   ESPhttpUpdate.onStart(update_started);
   ESPhttpUpdate.onEnd(update_finished);
   // ESPhttpUpdate.onProgress(update_progress);
   // ESPhttpUpdate.onError(update_error);
 
-  WiFiClient client;
-  t_httpUpdate_return ret = ESPhttpUpdate.update(client, "http://server/file.bin");
+  WiFiClientSecure client;
+  auto ret = ESPhttpUpdate.update(client, host, url);
 
   switch (ret)
   {
@@ -326,7 +331,7 @@ void updateFirmware()
 
   case HTTP_UPDATE_OK:
     Serial.println("HTTP_UPDATE_OK");
-    
+
     break;
   }
 }
