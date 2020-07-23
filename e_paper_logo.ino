@@ -307,7 +307,7 @@ void updateFirmware()
   // https://raw.githubusercontent.com/eziosoft/weatherEpaperDisplay/e_paper_logo.ino.d1.bin
   const char *host = "raw.githubusercontent.com";
   const int httpsPort = 443;
-  const char *url = "eziosoft/weatherEpaperDisplay/master/e_paper_logo.ino.d1.bin";
+  const char *url = "/eziosoft/weatherEpaperDisplay/master/e_paper_logo.ino.d1.bin";
 
   ESPhttpUpdate.setLedPin(LED_BUILTIN, LOW);
   ESPhttpUpdate.onStart(update_started);
