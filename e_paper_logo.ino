@@ -17,7 +17,7 @@
 #include "ESP8266WiFi.h"
 #include "icons.h" //weather icons from OpenWeather
 
-#define FW_VERSION 1
+#define FW_VERSION 2
 
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
 GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BRW - slow refresh
@@ -150,7 +150,7 @@ void json(char *json)
       break;
     }
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 20; i++)
     {
       JsonObject datai = data[i];
       int data_x = datai["x"];            // 10
