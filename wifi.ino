@@ -60,7 +60,7 @@ void configModeCallback(WiFiManager *myWiFiManager)
 
 void mqttCallback(char *topic, byte *payload, unsigned int length)
 {
-  Serial.print("MQTT:");
+  // Serial.print("MQTT:");
 
   char buf[length];
   for (int i = 0; i < length; i++)
