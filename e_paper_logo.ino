@@ -17,7 +17,7 @@
 #include "ESP8266WiFi.h"
 #include "icons.h" //weather icons from OpenWeather
 
-#define FW_VERSION 3
+#define FW_VERSION 4
 
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
 GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BRW - slow refresh

@@ -44,8 +44,9 @@ void loopWifi()
 
 void sendTelemetry()
 {
-  char buf[50];
-  sprintf(buf, "{\"name\":\"epaperDisplay\",\"ssid\":\"%s\",\"upTimeMs\":%d,\"RSSI\":%d,\"VDD\":%d}", ssid, millis(), (int)rssi, (int)(vdd * 100));
+  char buf[200];
+  
+  sprintf(buf, "{\"name\":\"epaperDisplay\"\"version\":FW_VERSION,\"ssid\":\"%s\",\"upTimeMs\":%d,\"RSSI\":%d,\"VDD\":%d}", ssid, millis(), (int)rssi, (int)(vdd * 100));
   client.publish(outTopic, buf, true);
 }
 
