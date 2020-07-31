@@ -17,7 +17,7 @@
 #include "ESP8266WiFi.h"
 #include "icons.h" //weather icons from OpenWeather
 
-#define FW_VERSION 4
+#define FW_VERSION 7
 
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
 GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BRW - slow refresh
@@ -55,7 +55,11 @@ void setup()
 
 void loop()
 {
-  loopWifi();
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    loopMQTT();
+  }
+
   if (millis() > 20000) //if this runs more than 20sek something was wrong. usually takes 8sek
   {
     printTextCenter("timeout");
@@ -66,9 +70,8 @@ void loop()
   }
 }
 
-void json(char *json)
+void json(char *json) //from mqttCallback
 {
-  sendTelemetry();
 
   const size_t capacity = JSON_ARRAY_SIZE(4) + JSON_ARRAY_SIZE(20) + 24 * JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + 550;
   DynamicJsonDocument doc(capacity);
@@ -89,6 +92,7 @@ void json(char *json)
     updateFirmware();
   }
 
+  sendTelemetry("");
   delay(100);
   WiFi.mode(WIFI_OFF);
   WiFi.forceSleepBegin();
@@ -164,11 +168,9 @@ void json(char *json)
       case 0:
         display.setFont(&FreeMonoBold9pt7b);
         break;
-
       case 1:
         display.setFont(&FreeMonoBold24pt7b);
         break;
-
       case 2:
         display.setFont(&FreeSans9pt7b);
         break;
@@ -290,14 +292,15 @@ void update_started()
 {
   Serial.println("CALLBACK:  HTTP update process started");
   printTextCenter("Firmware update...");
+  sendTelemetry("Firmware update started");
 }
 
 void update_finished()
 {
   Serial.println("CALLBACK:  HTTP update process finished");
   printTextCenter("Firmware update DONE!");
+  sendTelemetry("Firmware update finished");
 }
-
 
 #include "ESP8266httpUpdate.h"
 
@@ -315,7 +318,6 @@ void updateFirmware()
   // ESPhttpUpdate.onProgress(update_progress);
   // ESPhttpUpdate.onError(update_error);
 
-  
   auto ret = ESPhttpUpdate.update("http://eziosoft.com/api/weatherDisplayFW/e_paper_logo.ino.d1.bin");
 
   switch (ret)
@@ -323,6 +325,7 @@ void updateFirmware()
   case HTTP_UPDATE_FAILED:
     Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s\n", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
     printTextCenter("FW update failed");
+    sendTelemetry("Firmware update FAILED");
     break;
 
   case HTTP_UPDATE_NO_UPDATES:

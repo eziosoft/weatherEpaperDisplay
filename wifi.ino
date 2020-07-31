@@ -4,20 +4,22 @@
 #include <PubSubClient.h>
 #define MQTT_MAX_PACKET_SIZE 2048
 
-const char *ssid = "Epaper";         //robot creates wifi hotspot when wifi connection is not configured
-const char *outTopic = "epaper/out"; //MQTT topic for robot telemetry messages
-const char *jsonTopic = "epaper/json";
+const char *ssid = "Epaper";              //robot creates wifi hotspot when wifi connection is not configured
+const char *outTopic = "epaper/out";      //MQTT topic for telemetry messages
+const char *jsonTopic = "epaper/json";    //MQTT control topic
 const char *mqtt_server = "192.168.0.19"; //my  MQTT server
 
-WiFiClient espClient;
-PubSubClient client(espClient); //MQTT
-char buffer1[20];               //multiusage
+WiFiClient wifiClient;
+PubSubClient mqttClient(wifiClient); //MQTT
+// char buffer1[20];               //multiusage
+
+uint32_t ID = ESP.getChipId();
 
 void configModeCallback(WiFiManager *myWiFiManager);
 
 void setupWifi()
 {
-  client.setBufferSize(MQTT_MAX_PACKET_SIZE);
+  mqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
 
   WiFiManager wifiManager;
   wifiManager.setAPCallback(configModeCallback);
@@ -29,25 +31,28 @@ void setupWifi()
     ESP.deepSleep(10e6);
   }
 
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(mqttCallback);
+  mqttClient.setServer(mqtt_server, 1883);
+  mqttClient.setCallback(mqttCallback);
 }
 
-void loopWifi()
+void loopMQTT()
 {
   //MQTT
-  if (!client.connected())
-    reconnect();
+  if (!mqttClient.connected())
+    mqttRecontect();
   else
-    client.loop();
+    mqttClient.loop();
 }
 
-void sendTelemetry()
+void sendTelemetry(char *text) //text - max 80 chars
 {
-  char buf[200];
-  
-  sprintf(buf, "{\"name\":\"epaperDisplay\"\"version\":FW_VERSION,\"ssid\":\"%s\",\"upTimeMs\":%d,\"RSSI\":%d,\"VDD\":%d}", ssid, millis(), (int)rssi, (int)(vdd * 100));
-  client.publish(outTopic, buf, true);
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    char buf[200];
+
+    sprintf(buf, "{\"name\":\"epaperDisplay\",\"id\":%d,\"version\":%d,\"ssid\":\"%s\",\"upTimeMs\":%d,\"RSSI\":%d,\"VDD\":%d,\"err\":%s}", ID, FW_VERSION, ssid, millis(), (int)rssi, (int)(vdd * 100), text);
+    mqttClient.publish(outTopic, buf, true);
+  }
 }
 
 void configModeCallback(WiFiManager *myWiFiManager)
@@ -61,12 +66,9 @@ void configModeCallback(WiFiManager *myWiFiManager)
 
 void mqttCallback(char *topic, byte *payload, unsigned int length)
 {
-  // Serial.print("MQTT:");
-
   char buf[length];
   for (int i = 0; i < length; i++)
   {
-    // Serial.print((char)payload[i]);
     buf[i] = (char)payload[i];
   }
 
@@ -77,30 +79,32 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
   }
 }
 
-int tries = 10;
-void reconnect()
+int reconnectAttempts = 10;
+void mqttRecontect()
 {
   // Loop until we're reconnected
-  while (!client.connected())
+  while (!mqttClient.connected())
   {
 
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(ssid))
+    if (mqttClient.connect(ssid))
     {
       Serial.println("connected");
-      client.subscribe(jsonTopic);
+      mqttClient.subscribe(jsonTopic);
     }
     else
     {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
+      Serial.print(mqttClient.state());
+      Serial.println(" try again in 1 seconds");
       // Wait 1 seconds before retrying
       delay(1000);
-      tries--;
-      if (tries == 0)
+      reconnectAttempts--;
+      if (reconnectAttempts == 0)
       {
+        printTextCenter("MQTT: unable to connect");
+        delay(100);
         deepSleep();
       }
     }
