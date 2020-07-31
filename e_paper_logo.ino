@@ -17,7 +17,8 @@
 #include "ESP8266WiFi.h"
 #include "icons.h" //weather icons from OpenWeather
 
-#define FW_VERSION 7
+#define FW_VERSION 8
+bool firmwareUpdating = false;
 
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
 GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BRW - slow refresh
@@ -60,7 +61,7 @@ void loop()
     loopMQTT();
   }
 
-  if (millis() > 20000) //if this runs more than 20sek something was wrong. usually takes 8sek
+  if (!firmwareUpdating && millis() > 20000) //if this runs more than 20sek something was wrong. usually takes 8sek
   {
     printTextCenter("timeout");
     delay(100);
@@ -306,6 +307,7 @@ void update_finished()
 
 void updateFirmware()
 {
+  firmwareUpdating = true;
 
   // https://raw.githubusercontent.com/eziosoft/weatherEpaperDisplay/e_paper_logo.ino.d1.bin
   // const char *host = "raw.githubusercontent.com";
