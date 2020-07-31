@@ -50,7 +50,7 @@ void sendTelemetry(char *text) //text - max 80 chars
   {
     char buf[200];
 
-    sprintf(buf, "{\"name\":\"epaperDisplay\",\"id\":%d,\"version\":%d,\"ssid\":\"%s\",\"upTimeMs\":%d,\"RSSI\":%d,\"VDD\":%d,\"err\":%s}", ID, FW_VERSION, ssid, millis(), (int)rssi, (int)(vdd * 100), text);
+    sprintf(buf, "{\"name\":\"epaperDisplay\",\"id\":%d,\"version\":%d,\"ssid\":\"%s\",\"upTimeMs\":%d,\"RSSI\":%d,\"VDD\":%d,\"err\":\"%s\"}", ID, FW_VERSION, ssid, millis(), (int)rssi, (int)(vdd * 100), text);
     mqttClient.publish(outTopic, buf, true);
   }
 }

@@ -17,7 +17,7 @@
 #include "ESP8266WiFi.h"
 #include "icons.h" //weather icons from OpenWeather
 
-#define FW_VERSION 8
+#define FW_VERSION 9
 bool firmwareUpdating = false;
 
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
