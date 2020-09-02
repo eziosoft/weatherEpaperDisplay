@@ -16,9 +16,13 @@
 
 #include "ESP8266WiFi.h"
 #include "icons.h" //weather icons from OpenWeather
+#include "logo.h"
 
-#define FW_VERSION 9
+#define FW_VERSION 11
 bool firmwareUpdating = false;
+
+#define myID 16493833
+uint32_t ID = ESP.getChipId();
 
 // GxEPD2_BW<GxEPD2_260, GxEPD2_260::HEIGHT> display(GxEPD2_260(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BW - faster refresh
 GxEPD2_3C<GxEPD2_260c, GxEPD2_260c::HEIGHT> display(GxEPD2_260c(/*CS=D8*/ SS, /*DC=D3*/ 0, /*RST=D4*/ 2, /*BUSY=D2*/ 4)); //BRW - slow refresh
@@ -52,6 +56,13 @@ void setup()
 
   rssi = dBmtoPercentage(WiFi.RSSI());
   rssiString.print(rssi, 0);
+
+  //put D6 low to force firmware update
+  pinMode(D6, INPUT_PULLUP);
+  if (digitalRead(D6) == LOW)
+  {
+    updateFirmware();
+  }
 }
 
 void loop()
@@ -61,7 +72,7 @@ void loop()
     loopMQTT();
   }
 
-  if (!firmwareUpdating && millis() > 20000) //if this runs more than 20sek something was wrong. usually takes 8sek
+  if (!firmwareUpdating && millis() > 30000) //if this runs more than 20sek something was wrong. usually takes 8sek
   {
     printTextCenter("timeout");
     delay(100);
@@ -124,6 +135,10 @@ void json(char *json) //from mqttCallback
 
     switch (icon)
     {
+    case 0:
+      displayFullScreenImage();
+      deepSleep();
+      break;
     case 1:
       display.drawInvertedBitmap(HEIGHT - 100, 20, i01n, 100, 100, iconColor);
       break;
@@ -339,4 +354,18 @@ void updateFirmware()
 
     break;
   }
+}
+
+void displayFullScreenImage()
+{
+  display.setRotation(0);
+  display.setFont(&FreeMonoBold9pt7b);
+  display.setTextColor(GxEPD_BLACK);
+  display.setFullWindow();
+  display.firstPage();
+  do
+  {
+    display.drawInvertedBitmap(0, 0, logoB, WIDTH, HEIGHT, GxEPD_RED);
+    display.drawInvertedBitmap(0, 0, logoR, WIDTH, HEIGHT, GxEPD_BLACK);
+  } while (display.nextPage());
 }

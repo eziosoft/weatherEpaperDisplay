@@ -5,15 +5,20 @@
 #define MQTT_MAX_PACKET_SIZE 2048
 
 const char *ssid = "Epaper";              //robot creates wifi hotspot when wifi connection is not configured
-const char *outTopic = "epaper/out";      //MQTT topic for telemetry messages
-const char *jsonTopic = "epaper/json";    //MQTT control topic
-const char *mqtt_server = "192.168.0.19"; //my  MQTT server
+
+// const char *mqtt_server = "192.168.0.19"; //my  MQTT server
+// const char *jsonTopic = "epaper/json";    //MQTT control topic
+// const char *outTopic = "epaper/out";      //MQTT topic for telemetry messages
+
+const char *mqtt_server = "test.mosquitto.org"; //
+const char *jsonTopic = "eziosoft/weatherEpaperDisplay";    //MQTT control topic
+const char *outTopic = "eziosoft/weatherEpaperDisplayTelemetry";      //MQTT topic for telemetry messages
+
+
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient); //MQTT
-// char buffer1[20];               //multiusage
 
-uint32_t ID = ESP.getChipId();
 
 void configModeCallback(WiFiManager *myWiFiManager);
 
