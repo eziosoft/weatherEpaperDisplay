@@ -1,9 +1,36 @@
+Reuse of not working price tag (SES imagotag Vusion 2.6 BWR) display as weather display.
+
+Parts:
+* price tag
+* esp8266 - Wemos Mini
+* HT7333 Low Power Consumption LDO 3.3V
+* 1S protected lipo battery
+* 1S usb charger
+
+Goals:
+* be able to run on battery for some time
+* be able to display text and lines
+* automatic firmware update
+* controlled via MQTT to be easly integrated with NodeRed
+
+
+---
+
+[PCB and connections](files/teardown.png)
+
+---
+
+
+
+
+
 Display controlled via MQTT and json
 based on epaper price tag + wemos mini
 
 
 
 example json:
+
     {"NR":600,"i":4,"ic":1,"d":[
         {"x":1,"y":10,"f":0,"c":0,"t":"20:20:15 (10m)"},
         {"x":10,"y":50,"f":1,"c":1,"t":"20.9C"},
@@ -21,14 +48,14 @@ example json:
         {"x1":0,"y1":0,"x2":140,"y2":150, "c":0}
     ]}
 
-NR - next refresh in seconds
-i -  icon number to display
-d - data array
-x,y - coordinates
-f - font ( 0 small , 1 big)
-c - color (0 black, 1 red)
-t - text
-l - lines array
+* NR - next refresh in seconds
+* i -  icon number to display
+* d - data array
+* x,y - coordinates
+* f - font ( 0 small , 1 big)
+* c - color (0 black, 1 red)
+* t - text
+* l - lines array
 
 
 
