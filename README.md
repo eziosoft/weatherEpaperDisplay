@@ -1,3 +1,6 @@
+![image](files/1.jpg)
+
+
 Reuse of not working price tag (SES imagotag Vusion 2.6 BWR) display as weather display.
 
 Parts:
