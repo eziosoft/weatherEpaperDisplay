@@ -1,12 +1,13 @@
 ![image](files/1.jpg)
 
 
-Reuse of not working price tag (SES imagotag Vusion 2.6 BWR) display as weather display.
+## Reuse of not working price tag (SES imagotag Vusion 2.6 BWR) display as weather display.
 
 Parts:
 * price tag
 * esp8266 - Wemos Mini
-* HT7333 Low Power Consumption LDO 3.3V
+* Holtek HT7333 Low Power Consumption LDO 3.3V
+* capacitor 470μF, 
 * 1S protected lipo battery
 * 1S usb charger
 
@@ -19,7 +20,28 @@ Goals:
 
 ---
 
+## Hardware connections
+Main CPU has to me removed from the display board.
+Wemos Mini is connected as follows.
+
+BUSY -> D2, RST -> D4, DC -> D3, CS -> D8, CLK -> D5, DIN -> D7, GND -> GND, 3.3V -> 3.3V
+
+![image](files/2.jpg)
+
 [PCB and connections](files/teardown.png)
+
+There is a resistor between A0 and 3.3V pins to allow input voltage mesuring.
+
+Also jumper needs to be added between RST and D0 to allow deep sleep and wake up. 
+
+Everything is powered via 3.3V PIN on Wemos Mini from HT7333 LDO with 470μF capacitor on output and 10μF on input.
+
+A trace makerd red on below picture has been cut to remove power from ch340 chip to reduce power consumption even more.
+CH340 is still powered from USB so ESP8266 can be programmed from USB too.
+
+![image](files/3.jpg)
+
+Power consumption in deep sleep is about 1mA.
 
 ---
 
@@ -34,21 +56,30 @@ based on epaper price tag + wemos mini
 
 example json:
 
-    {"NR":600,"i":4,"ic":1,"d":[
-        {"x":1,"y":10,"f":0,"c":0,"t":"20:20:15 (10m)"},
-        {"x":10,"y":50,"f":1,"c":1,"t":"20.9C"},
-        {"x":10,"y":90,"f":1,"c":1,"t":"Clouds"},
-        {"x":10,"y":110,"f":0,"c":0,"t":"broken clouds"},
-        {"x":10,"y":125,"f":0,"c":0,"t":"Gentle breeze"},
-        {"x":10,"y":150,"f":0,"c":0,"t":"Sun:5:51:44 - 21:56:48"},
-        {"x":180,"y":30,"f":0,"c":1,"t":"Faible:36"}
+    {"v":11,"NR":1260,"i":1,"ic":1,
+    "d":[
+    {"x":1,"y":10,"f":0,"c":0,"t":"22:10:16 (21m)"},
+
+    {"x":0,"y":50,"f":5,"c":1,"t":"25/25C"},
+    {"x":0,"y":65,"f":0,"c":1,"t":"clear sky"},
+    {"x":0,"y":80,"f":0,"c":1,"t":"Light air"},
+
+    {"x":220,"y":110,"f":2,"c":1,"t":"rain:NO"},
+
+    {"x":0,"y":150,"f":0,"c":1,"t":"Sun:7:26:07 - 20:05:56"},
+
+    {"x":220,"y":30,"f":2,"c":1,"t":"60 o3"},
+    {"x":220,"y":45,"f":2,"c":1,"t":"uvi:4.67"},
+
+    {"x":0,"y":100,"f":0,"c":0,"t":"21|32|29|27->33|21"},
+    {"x":0,"y":115,"f":0,"c":0,"t":"Clouds"}
     ],
     "l":[
-        {"x1":0,"y1":0,"x2":100,"y2":100, "c":0},
-        {"x1":0,"y1":0,"x2":110,"y2":120, "c":0},
-        {"x1":0,"y1":0,"x2":120,"y2":130, "c":0},
-        {"x1":0,"y1":0,"x2":130,"y2":140, "c":0},
-        {"x1":0,"y1":0,"x2":140,"y2":150, "c":0}
+        {"x1":0,"y1":13,"x2":296,"y2":13, "c":0},
+        {"x1":0,"y1":85,"x2":200,"y2":85, "c":0},
+        {"x1":200,"y1":85,"x2":200,"y2":137, "c":0},
+        {"x1":200,"y1":85,"x2":200,"y2":13, "c":0},
+        {"x1":0,"y1":137,"x2":296,"y2":137, "c":0}
     ]}
 
 * NR - next refresh in seconds
