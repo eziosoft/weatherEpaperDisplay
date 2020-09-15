@@ -18,7 +18,7 @@
 #include "icons.h" //weather icons from OpenWeather
 #include "logo.h"
 
-#define FW_VERSION 11
+#define FW_VERSION 12
 bool firmwareUpdating = false;
 
 #define myID 16493833
@@ -74,10 +74,9 @@ void loop()
 
   if (!firmwareUpdating && millis() > 30000) //if this runs more than 20sek something was wrong. usually takes 8sek
   {
-    printTextCenter("timeout");
+    printTextCenter("timeout. next try in 5min");
     delay(100);
-
-    interval = minute;
+    interval = 5 * minute;
     deepSleep();
   }
 }
