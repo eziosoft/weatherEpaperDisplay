@@ -3,6 +3,7 @@
 #include <WiFiManager.h>
 #include <PubSubClient.h>
 #define MQTT_MAX_PACKET_SIZE 2048
+#include "login.h"
 
 const char *ssid = "Epaper"; //robot creates wifi hotspot when wifi connection is not configured
 
@@ -10,9 +11,9 @@ const char *ssid = "Epaper"; //robot creates wifi hotspot when wifi connection i
 // const char *jsonTopic = "epaper/json";    //MQTT control topic
 // const char *outTopic = "epaper/out";      //MQTT topic for telemetry messages
 
-const char *mqtt_server = "test.mosquitto.org";                  //
-const char *jsonTopic = "eziosoft/weatherEpaperDisplay";         //MQTT control topic
-const char *outTopic = "eziosoft/weatherEpaperDisplayTelemetry"; //MQTT topic for telemetry messages
+// const char *mqtt_server = "test.mosquitto.org";                  //
+// const char *jsonTopic = "eziosoft/weatherEpaperDisplay";         //MQTT control topic
+// const char *outTopic = "eziosoft/weatherEpaperDisplayTelemetry"; //MQTT topic for telemetry messages
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient); //MQTT
@@ -91,7 +92,7 @@ void mqttRecontect()
 
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (mqttClient.connect(ssid))
+    if (mqttClient.connect(ssid,user,""))
     {
       Serial.println("connected");
       mqttClient.subscribe(jsonTopic);
@@ -106,7 +107,7 @@ void mqttRecontect()
       reconnectAttempts--;
       if (reconnectAttempts == 0)
       {
-        printTextCenter("Unable to connect to MQTT server. Next try in 10min");
+        printTextCenter("Unable to connect to MQTT  server. Next try in 10min");
         delay(100);
         interval = 10 * minute;
         deepSleep();

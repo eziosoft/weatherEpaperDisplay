@@ -43,6 +43,9 @@ float vdd, rssi;
 
 void setup()
 {
+
+  bool firmwareUpdate = digitalRead(D6) == LOW;
+  
   Serial.begin(115200);
   display.init(115200);
   display.setFullWindow();
@@ -59,7 +62,7 @@ void setup()
 
   //put D6 low to force firmware update
   pinMode(D6, INPUT_PULLUP);
-  if (digitalRead(D6) == LOW)
+  if (firmwareUpdate)
   {
     updateFirmware();
   }
