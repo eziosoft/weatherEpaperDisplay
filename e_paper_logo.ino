@@ -18,7 +18,7 @@
 #include "icons.h" //weather icons from OpenWeather
 #include "logo.h"
 
-#define FW_VERSION 12
+#define FW_VERSION 13
 bool firmwareUpdating = false;
 
 #define myID 16493833
@@ -45,7 +45,7 @@ void setup()
 {
 
   bool firmwareUpdate = digitalRead(D6) == LOW;
-  
+
   Serial.begin(115200);
   display.init(115200);
   display.setFullWindow();
@@ -116,6 +116,8 @@ void json(char *json) //from mqttCallback
 
   int icon = doc["i"];
   int iconColor = GxEPD_BLACK;
+  int xi = doc["xi"];
+  int yi = doc["yi"];
 
   if (doc["ic"] == 1)
   {
@@ -142,31 +144,31 @@ void json(char *json) //from mqttCallback
       deepSleep();
       break;
     case 1:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i01n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i01n, 100, 100, iconColor);
       break;
     case 2:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i02n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i02n, 100, 100, iconColor);
       break;
     case 3:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i03n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i03n, 100, 100, iconColor);
       break;
     case 4:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i04n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i04n, 100, 100, iconColor);
       break;
     case 9:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i09n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i09n, 100, 100, iconColor);
       break;
     case 10:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i10n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i10n, 100, 100, iconColor);
       break;
     case 11:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i11n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i11n, 100, 100, iconColor);
       break;
     case 13:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i13n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i13n, 100, 100, iconColor);
       break;
     case 50:
-      display.drawInvertedBitmap(HEIGHT - 100, 20, i50n, 100, 100, iconColor);
+      display.drawInvertedBitmap(xi, yi, i50n, 100, 100, iconColor);
       break;
     default:
       break;
